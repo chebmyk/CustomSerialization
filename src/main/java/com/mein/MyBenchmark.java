@@ -25,6 +25,7 @@
 
 package com.mein;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mein.custom.MetaDataLoader;
 import com.mein.data.Child;
 import com.mein.data.Parent;
@@ -44,13 +45,21 @@ public class MyBenchmark {
         public Parent parent2 = new Parent(35,"ParentName2");
         public Child child = new Child(8,"ChildName");
         public Child child2 = new Child(8,"ChildName");
-        public byte[] serializedObject ;
+        public byte[] customSerializedObject ;
+        public byte[] jsonSerializedObject ;
+        public byte[] nativeSerializedObject ;
 
         @Setup(Level.Invocation)
         public void setUp() {
             parent1.addChild(child);
             parent1.addChild(child2);
-            serializedObject = MetaDataLoader.serialize(parent1);
+            customSerializedObject = MetaDataLoader.serialize(parent1);
+            try {
+                jsonSerializedObject = JsonSerialization.writeJsonObject(parent1);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            nativeSerializedObject = NativeSerialization.writeObject(parent1);
         }
     }
 
@@ -63,18 +72,22 @@ public class MyBenchmark {
 
     @Benchmark
     public Parent testCustom2DeSerialization(InitParams ip) {
-        return (Parent) MetaDataLoader.deSerialized(ip.serializedObject);
+        return (Parent) MetaDataLoader.deSerialized(ip.customSerializedObject);
     }
 
 
     @Benchmark
     public Parent testJson2DeSerialization(InitParams ip) {
-        return (Parent)JsonSerialization.readJsonObject(ip.parent1.getClass());
+        return (Parent)JsonSerialization.readJsonObject(ip.jsonSerializedObject,ip.parent1.getClass());
     }
 
     @Benchmark
     public void testJson1Serialization(InitParams ip) {
-        JsonSerialization.writeJsonObject(ip.parent1);
+        try {
+            JsonSerialization.writeJsonObject(ip.parent1);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Benchmark
@@ -83,8 +96,8 @@ public class MyBenchmark {
     }
 
     @Benchmark
-    public Parent testNative2DeSerialization() {
-        return (Parent) NativeSerialization.readObject();
+    public Parent testNative2DeSerialization(InitParams ip) {
+        return (Parent) NativeSerialization.readObject(ip.nativeSerializedObject);
     }
 
     public static void main(String[] args) throws RunnerException {

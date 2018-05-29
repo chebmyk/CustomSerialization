@@ -15,7 +15,6 @@ class MetaDataLoaderTest {
     private Child child = new Child(8,"ChildName");
     private Child child2 = new Child(9,"ChildName2");
 
-
     @BeforeEach
     void setUp() {
         child.setBestFriend(child2);

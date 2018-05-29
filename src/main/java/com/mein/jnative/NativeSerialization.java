@@ -4,22 +4,23 @@ import java.io.*;
 
 public class NativeSerialization {
 
-    static final String filename = "native_output.txt";
-
-    public static void writeObject(Object obj){
-        try(ObjectOutputStream objOutput = new ObjectOutputStream(new FileOutputStream(filename)) ){
+    public static byte[] writeObject(Object obj){
+        byte[] result =null;
+        try(ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream objOutput = new ObjectOutputStream(bos) ){
             objOutput.writeObject(obj);
+            objOutput.flush();
+            result = bos.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return result;
     }
 
-    public static Object readObject(){
-        try(ObjectInputStream objInput = new ObjectInputStream(new FileInputStream(filename))) {
+
+    public static Object readObject(byte[] input){
+        try(ByteArrayInputStream bis = new ByteArrayInputStream(input) ; ObjectInputStream objInput = new ObjectInputStream(bis)) {
             return objInput.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return null;

@@ -11,11 +11,6 @@ public class ByteArrayReader {
         this.byteArray = byteArray;
     }
 
-    public ByteArrayReader(byte[] byteArray, int pos) {
-        this.byteArray = byteArray;
-        this.pos = pos;
-    }
-
     public byte[] getSubArray(int from, int to) {
         return Arrays.copyOfRange(byteArray,from,to);
     }

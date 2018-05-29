@@ -2,6 +2,7 @@ package com.mein.custom;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Stream;
 
@@ -29,27 +30,30 @@ public class MetaDataLoader {
             try {
                 f.setAccessible(true);
                 clazz.add(BinaryMarker.FIELD_START.code);
-                if (f.getType().isPrimitive()) {  ///////////////////////////////Pimitive type *********************
-                    //System.out.println(f.getName() + ":" + f.getType() + ":" + f.get(o));
+                if (f.getType().isPrimitive()) {  ///////////////////////////////Pimitive type///////////////
                     clazz.addAll(getDescription(f.getName()));
                     clazz.addAll(getDescription(f.getType().getTypeName()));
                     clazz.add(BinaryMarker.TYPE_PRIMITIVE.code);
                     byte[] field_value = getFieldValue(f, o);
                     clazz.addAll(ByteArrayUtils.toByta(field_value.length));
                     clazz.addAll(field_value);
-                } else if (f.getType().isArray()) {                  ////////////////Arrays
+                } else if (f.getType().isArray()) {                  ////////////Arrays/////////////////////
                     clazz.addAll(getDescription(f.getName()));
                     clazz.addAll(getDescription(f.getType().getName()));
                     clazz.add(BinaryMarker.TYPE_ARRAY.code);
-                    clazz.addAll(ByteArrayUtils.toByta(Array.getLength(f.get(o))));
-                    Stream.of(f.get(o)).forEach(i -> clazz.addAll(MetaDataLoader.getClassMetaData(i)));
-                } else if (f.get(o) instanceof Collection) {               //// Collections
+                    int length = Array.getLength(f.get(o));
+                    clazz.addAll(ByteArrayUtils.toByta(length));
+                    while(length>0){
+                        clazz.addAll(MetaDataLoader.getClassMetaData(Array.get(f.get(o),length-1)));
+                        length--;
+                    }
+                } else if (f.get(o) instanceof Collection) {               //////Collections/////////////////
                     clazz.addAll(getDescription(f.getName()));
                     clazz.addAll(getDescription(f.getType().getTypeName()));
                     clazz.add(BinaryMarker.TYPE_ARRAY.code);
                     clazz.addAll(ByteArrayUtils.toByta(((Collection) f.get(o)).size()));
                     ((Collection) f.get(o)).stream().forEach(i -> clazz.addAll(MetaDataLoader.getClassMetaData(i)));
-                } else if (f.get(o) instanceof String) {                   ///String
+                } else if (f.get(o) instanceof String) {                   //////String/////////////////////
                     clazz.addAll(getDescription(f.getName()));
                     clazz.addAll(getDescription(f.getType().getTypeName()));
                     clazz.add(BinaryMarker.TYPE_PRIMITIVE.code);
@@ -61,6 +65,7 @@ public class MetaDataLoader {
                     clazz.addAll(getDescription(f.getName()));
                     clazz.addAll(getDescription(f.getType().getTypeName()));
                     clazz.add(BinaryMarker.TYPE_CLASS.code);
+                    clazz.addAll(ByteArrayUtils.toByta(1));
                     clazz.addAll(MetaDataLoader.getClassMetaData(f.get(o)));
                 }
                 clazz.add(BinaryMarker.FIELD_END.code);
@@ -68,7 +73,6 @@ public class MetaDataLoader {
                 e.printStackTrace();
             }
         }
-        //System.out.println("<"+o.getClass().getName()+"/>");
         clazz.add(BinaryMarker.CLASS_END.code);
         return clazz.getByteArray();
     }
@@ -121,7 +125,6 @@ public class MetaDataLoader {
         byte[] val = ByteArrayUtils.toByta(name);
         ba.addAll(ByteArrayUtils.toByta(val.length));
         ba.addAll(val);
-        //System.out.println(name + "["+val.length+"]");
         return ba.getByteArray();
     }
 
@@ -174,8 +177,12 @@ public class MetaDataLoader {
 
         Object value = null;
         if(type_marker == BinaryMarker.TYPE_ARRAY.code) {
-            Class classDefinition = Class.forName(field.get(root_object).getClass().getTypeName());
-            value = classDefinition.newInstance();
+            Class classDefinition = Class.forName(field.get(root_object).getClass().getName());
+            if(!field_type.contains("[")) {
+                value = classDefinition.newInstance();
+            } else {
+                value = Array.newInstance(classDefinition.getComponentType(), length);
+            }
             int i =0;
             while (i<length){
                 Object o = readClass(reader);
