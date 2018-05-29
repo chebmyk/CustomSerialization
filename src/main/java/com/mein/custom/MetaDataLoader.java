@@ -19,22 +19,29 @@ public class MetaDataLoader {
         ByteArray clazz = new ByteArray(1000);
         clazz.add(BinaryMarker.CLASS_START.code);
         Field[] fields = new Field[0];
-        if(o != null) {
-            clazz.addAll(getDescription(o.getClass().getName()));
-            fields = o.getClass().getDeclaredFields();
-            clazz.addAll(ByteArrayUtils.toByta(fields.length));            //fields count
-        } else {
-            clazz.add(BinaryMarker.TYPE_NULL.code);
-        }
-        for (Field f : fields) {
-            try {
+        try {
+            if(o != null) {
+                clazz.addAll(getDescription(o.getClass().getName()));
+                if(o.getClass().isPrimitive() || o instanceof String){  ///todo
+                    byte[] field_value = getFieldValue(o.getClass(), o);
+                    clazz.addAll(ByteArrayUtils.toByta(field_value.length));
+                    clazz.addAll(field_value);
+                }else {
+                    fields = o.getClass().getDeclaredFields();
+                    clazz.addAll(ByteArrayUtils.toByta(fields.length));            //fields count
+                }
+            } else {
+                clazz.add(BinaryMarker.TYPE_NULL.code);
+            }
+            for (Field f : fields) {
+
                 f.setAccessible(true);
                 clazz.add(BinaryMarker.FIELD_START.code);
                 if (f.getType().isPrimitive()) {  ///////////////////////////////Pimitive type///////////////
                     clazz.addAll(getDescription(f.getName()));
                     clazz.addAll(getDescription(f.getType().getTypeName()));
                     clazz.add(BinaryMarker.TYPE_PRIMITIVE.code);
-                    byte[] field_value = getFieldValue(f, o);
+                    byte[] field_value = getFieldValue(f.getType(), f.get(o));
                     clazz.addAll(ByteArrayUtils.toByta(field_value.length));
                     clazz.addAll(field_value);
                 } else if (f.getType().isArray()) {                  ////////////Arrays/////////////////////
@@ -44,7 +51,7 @@ public class MetaDataLoader {
                     int length = Array.getLength(f.get(o));
                     clazz.addAll(ByteArrayUtils.toByta(length));
                     while(length>0){
-                        clazz.addAll(MetaDataLoader.getClassMetaData(Array.get(f.get(o),length-1)));
+                        clazz.addAll(MetaDataLoader.getClassMetaData(Array.get(f.get(o),length-1))); //todo
                         length--;
                     }
                 } else if (f.get(o) instanceof Collection) {               //////Collections/////////////////
@@ -57,7 +64,7 @@ public class MetaDataLoader {
                     clazz.addAll(getDescription(f.getName()));
                     clazz.addAll(getDescription(f.getType().getTypeName()));
                     clazz.add(BinaryMarker.TYPE_PRIMITIVE.code);
-                    byte[] value = getFieldValue(f, o);;
+                    byte[] value = getFieldValue(f.getType(), f.get(o));
                     clazz.addAll(ByteArrayUtils.toByta(value.length));
                     clazz.addAll(ByteArrayUtils.toByta(value));
                 }
@@ -69,9 +76,10 @@ public class MetaDataLoader {
                     clazz.addAll(MetaDataLoader.getClassMetaData(f.get(o)));
                 }
                 clazz.add(BinaryMarker.FIELD_END.code);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+
             }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
         clazz.add(BinaryMarker.CLASS_END.code);
         return clazz.getByteArray();
@@ -94,28 +102,28 @@ public class MetaDataLoader {
         return object;
     }
 
-    private static byte[] getFieldValue(Field f, Object o) throws IllegalAccessException {
+    private static byte[] getFieldValue(Class clazz, Object o) throws IllegalAccessException {
         byte[] result;
-        if (f.getType() == int.class) {
-            result = ByteArrayUtils.toByta(f.getInt(o));
-        } else if (f.getType() == boolean.class){
-            result =  ByteArrayUtils.toByta(f.getBoolean(o));
-        } else if (f.getType() == byte.class){
-            result =  ByteArrayUtils.toByta(f.getByte(o));
-        } else if (f.getType() == char.class){
-            result =  ByteArrayUtils.toByta(f.getChar(o));
-        } else if (f.getType() == double.class){
-            result =  ByteArrayUtils.toByta(f.getDouble(o));
-        } else if (f.getType() == float.class){
-            result =  ByteArrayUtils.toByta(f.getFloat(o));
-        } else if (f.getType() == long.class){
-            result =  ByteArrayUtils.toByta(f.getLong(o));
-        } else if (f.getType() == short.class){
-            result =  ByteArrayUtils.toByta(f.getShort(o));
-        } else if (f.getType() == String.class){
-            result =  ByteArrayUtils.toByta(f.get(o).toString());
+        if (clazz == int.class) {
+            result = ByteArrayUtils.toByta((int)o);
+        } else if (clazz== boolean.class){
+            result =  ByteArrayUtils.toByta((boolean)o);
+        } else if (clazz == byte.class){
+            result =  ByteArrayUtils.toByta((byte)o);
+        } else if (clazz == char.class){
+            result =  ByteArrayUtils.toByta((char)o);
+        } else if (clazz == double.class){
+            result =  ByteArrayUtils.toByta((double)o);
+        } else if (clazz == float.class){
+            result =  ByteArrayUtils.toByta((float)o);
+        } else if (clazz == long.class){
+            result =  ByteArrayUtils.toByta((long)o);
+        } else if (clazz == short.class){
+            result =  ByteArrayUtils.toByta((short)o);
+        } else if (clazz == String.class){
+            result =  ByteArrayUtils.toByta(o.toString());
         } else {
-            throw new UnsupportedOperationException("Field type [" + f.getType().getTypeName() + "] is not supported");
+            throw new UnsupportedOperationException("Field type [" + clazz.getName() + "] is not supported");
         }
         return result;
     }
@@ -142,13 +150,18 @@ public class MetaDataLoader {
 
             Class classDefinition = Class.forName(clazz_name);
             root_object = classDefinition.newInstance();
-            int filds_count = ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(4));
-            //read fields info
-            while (filds_count > 0) {
-                populateClassField(reader, root_object);
-                filds_count--;
-            }
 
+            if(root_object.getClass().isPrimitive() || root_object instanceof String){
+                length =  ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(4));
+                root_object = readPrimitiveValue(reader,root_object.getClass().getName(),length);
+            } else {
+                int filds_count = ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(4));
+                //read fields info
+                while (filds_count > 0) {
+                    populateClassField(reader, root_object);
+                    filds_count--;
+                }
+            }
         } else {
             if(reader.next() != BinaryMarker.TYPE_NULL.code){
                 throw new UnsupportedClassVersionError("Usupported format for Object");
@@ -193,27 +206,7 @@ public class MetaDataLoader {
                 i++;
             }
         } else if(type_marker == BinaryMarker.TYPE_PRIMITIVE.code){
-            if ("int".equals(field_type)) {
-                value = ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(length));
-            } else if ("boolean".equals(field_type)){
-                value = ByteArrayUtils.toBoolean(reader.getSubArrayFromCurrent(length));
-            } else if ("byte".equals(field_type)){
-                value = ByteArrayUtils.toByte(reader.getSubArrayFromCurrent(length));
-            } else if ("char".equals(field_type)){
-                value = ByteArrayUtils.toChar(reader.getSubArrayFromCurrent(length));
-            } else if ("double".equals(field_type)){
-                value = ByteArrayUtils.toDouble(reader.getSubArrayFromCurrent(length));
-            } else if ("float".equals(field_type)){
-                value = ByteArrayUtils.toFloat(reader.getSubArrayFromCurrent(length));
-            } else if ("long".equals(field_type)){
-                value = ByteArrayUtils.toLong(reader.getSubArrayFromCurrent(length));
-            } else if ("short".equals(field_type)){
-                value = ByteArrayUtils.toShort(reader.getSubArrayFromCurrent(length));
-            } else if ("java.lang.String".equals(field_type)){
-                value = ByteArrayUtils.toString(reader.getSubArrayFromCurrent(length));
-            } else {
-                throw new UnsupportedOperationException("Field type [" + field_type + "] is not supported");
-            }
+            value = readPrimitiveValue(reader,field_type,length);
         }
         if(type_marker ==  BinaryMarker.TYPE_CLASS.code){
             value = readClass(reader);
@@ -224,5 +217,32 @@ public class MetaDataLoader {
         if(reader.next() != BinaryMarker.FIELD_END.code){
             throw new UnsupportedClassVersionError("Usupported format for Object");
         }
+    }
+
+    private static Object readPrimitiveValue (ByteArrayReader reader,String field_type,int length){
+        Object value = null;
+
+        if ("int".equals(field_type)) {
+            value = ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(length));
+        } else if ("boolean".equals(field_type)){
+            value = ByteArrayUtils.toBoolean(reader.getSubArrayFromCurrent(length));
+        } else if ("byte".equals(field_type)){
+            value = ByteArrayUtils.toByte(reader.getSubArrayFromCurrent(length));
+        } else if ("char".equals(field_type)){
+            value = ByteArrayUtils.toChar(reader.getSubArrayFromCurrent(length));
+        } else if ("double".equals(field_type)){
+            value = ByteArrayUtils.toDouble(reader.getSubArrayFromCurrent(length));
+        } else if ("float".equals(field_type)){
+            value = ByteArrayUtils.toFloat(reader.getSubArrayFromCurrent(length));
+        } else if ("long".equals(field_type)){
+            value = ByteArrayUtils.toLong(reader.getSubArrayFromCurrent(length));
+        } else if ("short".equals(field_type)){
+            value = ByteArrayUtils.toShort(reader.getSubArrayFromCurrent(length));
+        } else if ("java.lang.String".equals(field_type)){
+            value = ByteArrayUtils.toString(reader.getSubArrayFromCurrent(length));
+        } else {
+            throw new UnsupportedOperationException("Field type [" + field_type + "] is not supported");
+        }
+        return value;
     }
 }
