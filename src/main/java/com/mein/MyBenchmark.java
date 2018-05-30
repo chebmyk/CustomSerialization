@@ -41,13 +41,13 @@ public class MyBenchmark {
 
     @State(Scope.Thread)
     public static class InitParams {
-        public Parent parent1 = new Parent(30,"ParentName1");
+        Parent parent1 = new Parent(30,"ParentName1");
         public Parent parent2 = new Parent(35,"ParentName2");
-        public Child child = new Child(8,"ChildName");
-        public Child child2 = new Child(8,"ChildName");
-        public byte[] customSerializedObject ;
-        public byte[] jsonSerializedObject ;
-        public byte[] nativeSerializedObject ;
+        Child child = new Child(8,"ChildName");
+        Child child2 = new Child(8,"ChildName");
+        byte[] customSerializedObject ;
+        byte[] jsonSerializedObject ;
+        byte[] nativeSerializedObject ;
 
         @Setup(Level.Invocation)
         public void setUp() {
@@ -64,7 +64,7 @@ public class MyBenchmark {
     }
 
 
-   @Benchmark
+    @Benchmark
     public void testCustom1Serialization(InitParams ip) {
         MetaDataLoader.serialize(ip.parent1);
     }

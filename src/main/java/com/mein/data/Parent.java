@@ -9,7 +9,7 @@ public class Parent implements Serializable {
     private int age;
     String name;
     private Set<Child> children = new HashSet<Child>();
-    private int[] f_array = new int[2];
+    //private int[] f_array = new int[2];
 
     public Parent() {}
 
