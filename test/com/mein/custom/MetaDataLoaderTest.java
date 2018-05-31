@@ -1,6 +1,7 @@
 package com.mein.custom;
 
 import com.mein.data.Child;
+import com.mein.data.Gender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.mein.data.Parent;
@@ -12,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MetaDataLoaderTest {
 
-    private Parent parent1 = new Parent(30,"ParentName1");
+    private Parent parent1 = new Parent(Gender.MALE,30,"ParentName1");
     private Child child = new Child(8,"ChildName");
     private Child child2 = new Child(9,"ChildName2");
 

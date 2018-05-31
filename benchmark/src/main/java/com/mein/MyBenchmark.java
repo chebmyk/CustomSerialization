@@ -1,4 +1,4 @@
-/*
+package com.mein;/*
  * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,8 +23,6 @@
  * questions.
  */
 
-package com.mein;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mein.custom.MetaDataLoader;
 import com.mein.data.Child;
@@ -42,7 +40,7 @@ public class MyBenchmark {
     @State(Scope.Thread)
     public static class InitParams {
         Parent parent1 = new Parent(30,"ParentName1");
-        //public Parent parent2 = new Parent(35,"ParentName2");
+        public Parent parent2 = new Parent(35,"ParentName2");
         Child child = new Child(8,"ChildName");
         Child child2 = new Child(8,"ChildName");
         byte[] customSerializedObject ;
@@ -109,4 +107,6 @@ public class MyBenchmark {
 
         new Runner(opt).run();
     }
+
+
 }

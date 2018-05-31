@@ -8,6 +8,7 @@ import java.util.Set;
 public class Parent implements Serializable {
     private int age;
     String name;
+    Gender gender;
     private Set<Child> children = new HashSet<Child>();
     //private int[] f_array = new int[2];
 
@@ -16,6 +17,12 @@ public class Parent implements Serializable {
     public Parent(int age, String name) {
         this.age = age;
         this.name = name;
+    }
+
+    public Parent(Gender gender, int age, String name) {
+        this.age = age;
+        this.name = name;
+        this.gender = gender;
     }
 
     public int getAge() {

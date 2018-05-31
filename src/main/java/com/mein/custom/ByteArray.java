@@ -1,15 +1,12 @@
 package com.mein.custom;
 
-import java.util.LinkedList;
-import java.util.List;
 
 public class ByteArray {
     private byte[] byteArray;
-    private List arr = new LinkedList<>();
     private int pos = 0;
 
     public ByteArray() {
-        this.byteArray = new byte[8];
+        this.byteArray = new byte[128];
     }
 
     public ByteArray(int capacity) {
@@ -17,14 +14,13 @@ public class ByteArray {
     }
 
     public void add(byte val) {
-        if (pos >= byteArray.length) {
+        if (pos > byteArray.length) {
             byte[] newarray = new byte[(pos + 1) * 5 / 4];
             System.arraycopy(byteArray, 0, newarray, 0, byteArray.length);
             byteArray = newarray;
         }
         byteArray[pos] = val;
         pos++;
-        arr.add(val);
     }
 
     public void addAll(byte[] val) {
@@ -44,7 +40,6 @@ public class ByteArray {
             byteArray = newarray;
         }
         return byteArray;
-
     }
 
 

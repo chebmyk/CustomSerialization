@@ -9,6 +9,7 @@ public enum BinaryMarker {
     TYPE_PRIMITIVE((byte)0x3),
     TYPE_CLASS((byte)0x4),
     TYPE_ARRAY((byte)0x5),
+    TYPE_ENUM((byte)0x8),
     TYPE_NULL((byte)0x7);
 
     public byte code;
