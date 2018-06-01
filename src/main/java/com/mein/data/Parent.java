@@ -10,7 +10,7 @@ public class Parent implements Serializable {
     String name;
     Gender gender;
     private Set<Child> children = new HashSet<Child>();
-    //private int[] f_array = new int[2];
+    private int[] f_array = {5,7};
 
     public Parent() {}
 

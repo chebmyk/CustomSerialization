@@ -8,7 +8,6 @@ import java.io.IOException;
 
 public class JsonSerialization {
     private static ObjectMapper objectMapper = new ObjectMapper();
-    static String filename = "jsonmapper_output.json";
 
     public static byte[] writeJsonObject(Object obj) throws JsonProcessingException {
         return objectMapper.writeValueAsBytes(obj);

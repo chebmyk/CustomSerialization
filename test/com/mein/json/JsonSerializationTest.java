@@ -1,7 +1,8 @@
+package com.mein.json;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mein.data.Child;
 import com.mein.data.Parent;
-import com.mein.json.JsonSerialization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,9 +29,10 @@ class JsonSerializationTest {
 
     @Test
     void readJsonObjectEquals() {
-       Parent p2 = (Parent)JsonSerialization.readJsonObject(input,Parent.class);
-       assertEquals(p2.getAge(),parent1.getAge());
-       assertEquals(p2.getName(),parent1.getName());
-       assertArrayEquals(p2.getChildren().toArray(),parent1.getChildren().toArray());
+        Parent p2 = (Parent)JsonSerialization.readJsonObject(input,Parent.class);
+        assertEquals(p2.getAge(),parent1.getAge());
+        assertEquals(p2.getName(),parent1.getName());
+        assertArrayEquals(p2.getChildren().toArray(),parent1.getChildren().toArray());
     }
+
 }
