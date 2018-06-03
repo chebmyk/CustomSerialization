@@ -22,16 +22,12 @@ public class MetaDataLoader {
         // String example of serialization protocol
         //metadata = "☼20▬com.mein.data.Parent▬3▬age▬3▬int▬30▬4▬name▬16▬java.lang.String▬ParentName1▬8▬children▬13▬java.util.Set▬☼19▬com.mein.data.Child▬3▬age▬3▬int▬8▬4▬name▬16▬java.lang.String▬ChildName▬☼☼19▬com.mein.data.Child▬3▬age▬3▬int▬9▬4▬name▬16▬java.lang.String▬ChildName2▬☼☼"
         Object object = null;
-        try {
-            if (data[data.length - 1] != BinaryMarker.MYPROTOCOL.code) {
-                throw new UnsupportedClassVersionError("Usupported format for Object");
-            }
-            ByteArrayReader reader = new ByteArrayReader(data);
-            while (reader.hasNext() && reader.current() != BinaryMarker.MYPROTOCOL.code) {
-                object = readClass(reader);
-            }
-        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchFieldException e) {
-            e.printStackTrace();
+        if (data[data.length - 1] != BinaryMarker.MYPROTOCOL.code) {
+            throw new UnsupportedClassVersionError("Usupported format for Object");
+        }
+        ByteArrayReader reader = new ByteArrayReader(data);
+        while (reader.hasNext() && reader.current() != BinaryMarker.MYPROTOCOL.code) {
+            object = readClass(reader);
         }
         return object;
     }
@@ -122,7 +118,7 @@ public class MetaDataLoader {
         return ba.getByteArray();
     }
 
-    private static Object readClass(ByteArrayReader reader) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchFieldException {
+    private static Object readClass(ByteArrayReader reader) {
         Object root_object = null;
         if (reader.next() != BinaryMarker.CLASS_START.code) {
             throw new UnsupportedClassVersionError("Usupported format for Object");
@@ -130,15 +126,19 @@ public class MetaDataLoader {
         if (reader.current() != BinaryMarker.TYPE_NULL.code) {
             int length = ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(4));
             String clazz_name = ByteArrayUtils.toString(reader.getSubArrayFromCurrent(length));
-            Class classDefinition = Class.forName(clazz_name);
-            root_object = classDefinition.newInstance();
-            int filds_count = ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(4));
-            while (filds_count > 0) {
-                populateClassField(reader, root_object);
-                filds_count--;
-            }
-            if (ObjectWrapper.class.isAssignableFrom(root_object.getClass())) {
-                root_object = ((ObjectWrapper) root_object).readObject();
+            try {
+                Class classDefinition = Class.forName(clazz_name);
+                root_object = classDefinition.newInstance();
+                int filds_count = ByteArrayUtils.toInt(reader.getSubArrayFromCurrent(4));
+                while (filds_count > 0) {
+                    populateClassField(reader, root_object);
+                    filds_count--;
+                }
+                if (ObjectWrapper.class.isAssignableFrom(root_object.getClass())) {
+                    root_object = ((ObjectWrapper) root_object).readObject();
+                }
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchFieldException e){
+                throw new RuntimeException("Error while creating object " + clazz_name,e);
             }
         } else {
             if (reader.next() != BinaryMarker.TYPE_NULL.code) {

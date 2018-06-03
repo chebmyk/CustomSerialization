@@ -1,19 +1,19 @@
 package com.myserialization.custom.wrapper;
 
-public class IntegerWrapper implements ObjectWrapper {
-    private int value;
+public class BooleanWrapper implements ObjectWrapper {
+    private boolean value;
 
-    public IntegerWrapper() {
+    public BooleanWrapper() {
     }
 
     @Override
-    public Integer readObject() {
+    public Boolean readObject() {
         return value;
     }
 
     @Override
     public ObjectWrapper writeObject(Object o) {
-        this.value = (Integer)o;
+        this.value = (Boolean) o;
         return this;
     }
 }
