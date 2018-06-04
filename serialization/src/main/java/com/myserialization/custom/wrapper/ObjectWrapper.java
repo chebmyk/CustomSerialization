@@ -1,9 +1,9 @@
 package com.myserialization.custom.wrapper;
 
-public interface ObjectWrapper <E> {
+public interface ObjectWrapper <T> {
 
-    Object readObject();
+    T readObject();
 
-    ObjectWrapper writeObject(Object o);
+    ObjectWrapper writeObject(T o);
 
 }

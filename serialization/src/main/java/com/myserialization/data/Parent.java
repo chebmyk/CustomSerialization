@@ -1,10 +1,12 @@
 package com.myserialization.data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.*;
 
 public class Parent implements Serializable {
     private int age;
+    LocalDate birthday = LocalDate.of(1991,8,24);
     private Integer hieght = 177;
     private String name;
     private Gender gender;
